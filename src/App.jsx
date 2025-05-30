@@ -11,7 +11,6 @@ function App() {
   const [schedule, setSchedule] = useState([]);
   const [currentDay, setCurrentDay] = useState(1);
 
-  // Track time and day rollover
   function addMinutes(time, mins, day) {
     const [h, m] = time.split(':').map(Number);
     let total = h * 60 + m + mins;
@@ -60,17 +59,17 @@ function App() {
     let day = 1;
     let studied = 0;
 
-    // Add breakfast
+    //breakfast
     list.push({ time, activity: 'Breakfast', day });
     let next = addMinutes(time, 60, day);
     time = next.time;
     day = next.day;
 
-    // Add school and CCA
+    //school and CCA
     day = addBlocks(schoolStart, schoolEnd, 'School', list, day);
     day = addBlocks(ccaStart, ccaEnd, 'Co-curricular Activity', list, day);
 
-    // Find latest end time
+    //latest end time
     let latestEnd = '08:00';
     if (schoolEnd && ccaEnd) {
       latestEnd = schoolEnd > ccaEnd ? schoolEnd : ccaEnd;
@@ -82,7 +81,7 @@ function App() {
 
     if (latestEnd > time) time = latestEnd;
 
-    // Study sessions
+    // study sessions
     for (let subject of subjects) {
       if (subject.trim() !== '') {
         list.push({ time, activity: 'Study: ' + subject, day });
@@ -115,8 +114,13 @@ function App() {
   };
 
   return (
-    <div style={{ fontFamily: 'Arial', padding: '20px', maxWidth: '500px', margin: '0 auto' }}>
-      <h2 style={{ textAlign: 'center', color: '#2a9d8f' }}>📘 Mindful Study Scheduler</h2>
+    <div style={{ fontFamily: 'Arial',
+                  padding: '20px', 
+                  maxWidth: '500px', 
+                  margin: '0 auto'
+                 }}>
+                  
+      <h2 style={{ textAlign: 'center', color: '#2a9d8f' }}>Mindful Study Scheduler</h2>
 
       <div>
         <label>Number of Subjects: </label><br />
