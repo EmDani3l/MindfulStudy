@@ -2,26 +2,29 @@ import React, { useState } from 'react';
 import ScheduleList from './ScheduleList';
 import { addMinutes, isTimeUsed, addBlocks } from '../utils/scheduleUtils';
 
-function StudyForm() {
+function StudyForm({ setSchedule, setSubjects, setStudyTime }) {
   const [numSubjects, setNumSubjects] = useState(0);
-  const [subjects, setSubjects] = useState([]);
-  const [studyTime, setStudyTime] = useState(60);
+  const [localSubjects, setLocalSubjects] = useState([]);
+  const [localStudyTime, updateLocalStudyTime] = useState(60);
   const [schoolStart, setSchoolStart] = useState('');
   const [schoolEnd, setSchoolEnd] = useState('');
   const [ccaStart, setCCAStart] = useState('');
   const [ccaEnd, setCCAEnd] = useState('');
-  const [schedule, setSchedule] = useState([]);
+  const [localSchedule, setLocalSchedule] = useState([]);
 
   const handleSubjectCount = (e) => {
     const count = parseInt(e.target.value) || 0;
     setNumSubjects(count);
-    setSubjects(new Array(count).fill(''));
+    const blankList = new Array(count).fill('');
+    setLocalSubjects(blankList);
+    setSubjects(blankList); // sync with parent
   };
 
   const handleSubjectChange = (index, value) => {
-    const updated = [...subjects];
+    const updated = [...localSubjects];
     updated[index] = value;
-    setSubjects(updated);
+    setLocalSubjects(updated);
+    setSubjects(updated); // sync with parent
   };
 
   const generateSchedule = () => {
@@ -45,13 +48,13 @@ function StudyForm() {
 
     if (latestEnd > time) time = latestEnd;
 
-    for (let subject of subjects) {
+    for (let subject of localSubjects) {
       if (subject.trim() !== '') {
         list.push({ time, activity: 'Study: ' + subject, day });
-        next = addMinutes(time, parseInt(studyTime), day);
+        next = addMinutes(time, parseInt(localStudyTime), day);
         time = next.time;
         day = next.day;
-        studied += parseInt(studyTime);
+        studied += parseInt(localStudyTime);
 
         if (studied >= 60) {
           list.push({ time, activity: 'Break (15 mins)', day });
@@ -64,7 +67,9 @@ function StudyForm() {
     }
 
     list.sort((a, b) => a.day - b.day || a.time.localeCompare(b.time));
-    setSchedule(list);
+    setSchedule(list);          // pass to parent
+    setLocalSchedule(list);     // show locally
+    setStudyTime(localStudyTime); // pass to parent
   };
 
   const inputStyle = {
@@ -79,10 +84,15 @@ function StudyForm() {
     <div>
       <div>
         <label>Number of Subjects: </label><br />
-        <input type="number" value={numSubjects} onChange={handleSubjectCount} style={inputStyle} />
+        <input
+          type="number"
+          value={numSubjects}
+          onChange={handleSubjectCount}
+          style={inputStyle}
+        />
       </div>
 
-      {subjects.map((subj, index) => (
+      {localSubjects.map((subj, index) => (
         <div key={index}>
           <label>Subject {index + 1}:</label><br />
           <input
@@ -96,21 +106,49 @@ function StudyForm() {
 
       <div>
         <label>Study Time per Subject (minutes):</label><br />
-        <input type="number" value={studyTime} onChange={(e) => setStudyTime(e.target.value)} style={inputStyle} />
+        <input
+          type="number"
+          value={localStudyTime}
+          onChange={(e) => {
+            updateLocalStudyTime(e.target.value);
+            setStudyTime(e.target.value); // sync to parent
+          }}
+          style={inputStyle}
+        />
       </div>
 
       <hr />
       <h3>School</h3>
       <label>Start Time:</label><br />
-      <input type="time" value={schoolStart} onChange={(e) => setSchoolStart(e.target.value)} style={inputStyle} /><br />
+      <input
+        type="time"
+        value={schoolStart}
+        onChange={(e) => setSchoolStart(e.target.value)}
+        style={inputStyle}
+      /><br />
       <label>End Time:</label><br />
-      <input type="time" value={schoolEnd} onChange={(e) => setSchoolEnd(e.target.value)} style={inputStyle} />
+      <input
+        type="time"
+        value={schoolEnd}
+        onChange={(e) => setSchoolEnd(e.target.value)}
+        style={inputStyle}
+      />
 
       <h3>CCA</h3>
       <label>Start Time:</label><br />
-      <input type="time" value={ccaStart} onChange={(e) => setCCAStart(e.target.value)} style={inputStyle} /><br />
+      <input
+        type="time"
+        value={ccaStart}
+        onChange={(e) => setCCAStart(e.target.value)}
+        style={inputStyle}
+      /><br />
       <label>End Time:</label><br />
-      <input type="time" value={ccaEnd} onChange={(e) => setCCAEnd(e.target.value)} style={inputStyle} />
+      <input
+        type="time"
+        value={ccaEnd}
+        onChange={(e) => setCCAEnd(e.target.value)}
+        style={inputStyle}
+      />
 
       <br /><br />
       <button
@@ -127,7 +165,7 @@ function StudyForm() {
         Generate Schedule
       </button>
 
-      <ScheduleList schedule={schedule} />
+      <ScheduleList schedule={localSchedule} />
     </div>
   );
 }
