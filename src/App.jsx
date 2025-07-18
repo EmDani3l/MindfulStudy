@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import Login from './components/Login.jsx';
 import axios from 'axios';
 
 // Time utilities
@@ -34,6 +35,7 @@ function addBlocks(start, end, name, list, day) {
 
 export default function App() {
   // state/hooks
+  const [loggedIn, setLoggedIn] = useState(() => localStorage.getItem('loggedIn') === 'true');
   const [page, setPage] = useState('planner');
   const [numSubjects, setNumSubjects] = useState(0);
   const [subjects, setSubjects] = useState([]);
@@ -67,6 +69,42 @@ export default function App() {
     'Play soft background music',
     'Step outside for 2 minutes'
   ];
+
+  async function handleLogin(user, pass) {
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: user, password: pass })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setLoggedIn(true);
+        localStorage.setItem('loggedIn', 'true');
+        return true;
+      }
+    } catch {}
+    return false;
+  }
+
+  async function handleRegister(user, pass) {
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: user, password: pass })
+      });
+      const data = await res.json();
+      return data.success;
+    } catch {
+      return false;
+    }
+  }
+
+  function handleLogout() {
+    setLoggedIn(false);
+    localStorage.removeItem('loggedIn');
+  }
 
   // effects
   useEffect(() => {
@@ -201,6 +239,10 @@ export default function App() {
     else setModalConfig({ visible: true, type: 'generic', tip });
   }
 
+  if (!loggedIn) {
+    return <Login onLogin={handleLogin} onRegister={handleRegister} />;
+  }
+
   return (
     <div style={{ fontFamily: 'Arial', background: '#f4f6f8', minHeight: '100vh' }}>
       <nav style={{ background: '#3f51b5', padding: 10, display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -222,6 +264,21 @@ export default function App() {
             {tab[0].toUpperCase() + tab.slice(1)}
           </button>
         ))}
+        <button
+          onClick={handleLogout}
+          style={{
+            marginLeft: 'auto',
+            background: 'transparent',
+            border: 'none',
+            color: 'white',
+            fontWeight: 'bold',
+            padding: '6px 12px',
+            borderRadius: 6,
+            cursor: 'pointer'
+          }}
+        >
+          Logout
+        </button>
       </nav>
 
       <div style={{ maxWidth: 600, margin: '20px auto', background: '#fff', padding: 20, borderRadius: 10 }}>
