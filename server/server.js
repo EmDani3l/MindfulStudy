@@ -12,10 +12,14 @@ const app = express();
 app.use(cors({ origin: process.env.CLIENT_ORIGIN || 'http://localhost:3000' }));
 app.use(express.json());
 
-mongoose.connect(process.env.MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-});
+// connect to database and log connection state
+mongoose
+  .connect(process.env.MONGODB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => console.log('Connected to MongoDB'))
+  .catch((err) => console.error('MongoDB connection error:', err));
 
 const userSchema = new mongoose.Schema({
   googleId: String,
@@ -60,14 +64,17 @@ app.post('/auth/email', async (req, res) => {
   const { email, password, name, register } = req.body;
   try {
     let user = await User.findOne({ email });
-    if (register && !user) {
+    if (register) {
+      if (user)
+        return res.status(400).json({ error: 'User already exists' });
       const hash = await bcrypt.hash(password, 10);
       user = await User.create({ email, password: hash, name });
-    } else if (!user) {
-      return res.status(400).json({ error: 'User not found' });
     } else {
+      if (!user)
+        return res.status(400).json({ error: 'User not found' });
       const ok = await bcrypt.compare(password, user.password);
-      if (!ok) return res.status(400).json({ error: 'Invalid credentials' });
+      if (!ok)
+        return res.status(400).json({ error: 'Invalid credentials' });
     }
     res.json({ token: signToken(user) });
   } catch (e) {
