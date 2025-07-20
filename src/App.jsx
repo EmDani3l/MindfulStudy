@@ -35,7 +35,7 @@ function addBlocks(start, end, name, list, day) {
 
 export default function App() {
   // state/hooks
-  const [loggedIn, setLoggedIn] = useState(() => localStorage.getItem('loggedIn') === 'true');
+  const [loggedIn, setLoggedIn] = useState(() => !!localStorage.getItem('jwt'));
   const [page, setPage] = useState('planner');
   const [numSubjects, setNumSubjects] = useState(0);
   const [subjects, setSubjects] = useState([]);
@@ -72,30 +72,45 @@ export default function App() {
 
   async function handleLogin(user, pass) {
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/login`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/auth/email`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: user, password: pass })
+        body: JSON.stringify({ email: user, password: pass })
       });
       const data = await res.json();
-      if (data.success) {
+      if (data.token) {
         setLoggedIn(true);
-        localStorage.setItem('loggedIn', 'true');
+        localStorage.setItem('jwt', data.token);
         return true;
       }
     } catch {}
     return false;
   }
 
-  async function handleRegister(user, pass) {
+  async function handleGoogle(token) {
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/register`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/auth/google`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: user, password: pass })
+        body: JSON.stringify({ token })
       });
       const data = await res.json();
-      return data.success;
+      if (data.token) {
+        setLoggedIn(true);
+        localStorage.setItem('jwt', data.token);
+      }
+    } catch {}
+  }
+
+  async function handleRegister(user, pass) {
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/auth/email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: user, password: pass, register: true })
+      });
+      const data = await res.json();
+      return !!data.token;
     } catch {
       return false;
     }
@@ -103,7 +118,7 @@ export default function App() {
 
   function handleLogout() {
     setLoggedIn(false);
-    localStorage.removeItem('loggedIn');
+    localStorage.removeItem('jwt');
   }
 
   // effects
@@ -240,7 +255,7 @@ export default function App() {
   }
 
   if (!loggedIn) {
-    return <Login onLogin={handleLogin} onRegister={handleRegister} />;
+     return <Login onLogin={handleLogin} onRegister={handleRegister} onGoogle={handleGoogle} />;
   }
 
   return (

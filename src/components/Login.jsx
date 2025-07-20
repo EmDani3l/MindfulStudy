@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
+import { GoogleLogin } from '@react-oauth/google';
 
-export default function Login({ onLogin, onRegister }) {
+export default function Login({ onLogin, onRegister, onGoogle }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [mode, setMode] = useState('login'); // 'login' or 'register'
+  const [error, setError] = useState('');
 
   async function submit(e) {
     e.preventDefault();
@@ -47,6 +49,12 @@ export default function Login({ onLogin, onRegister }) {
          </button>
         {error && <div style={{ color: 'red' }}>{error}</div>}
       </form>
+      <div style={{ marginTop: 10 }}>
+        <GoogleLogin
+          onSuccess={cred => onGoogle(cred.credential)}
+          onError={() => setError('Google login failed')}
+        />
+      </div>
       {mode === 'login' ? (
         <p style={{ marginTop: 8 }}>
           Need an account?{' '}
