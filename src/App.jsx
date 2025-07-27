@@ -70,55 +70,49 @@ export default function App() {
     'Step outside for 2 minutes'
   ];
 
+  // Mock authentication functions
   async function handleLogin(user, pass) {
-    try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/auth/email`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: user, password: pass })
-      });
-      const data = await res.json();
-      if (data.token) {
-        setLoggedIn(true);
-        localStorage.setItem('jwt', data.token);
-        return true;
-      }
-    } catch {}
+    // Mock authentication - check if user exists in localStorage
+    const storedUsers = JSON.parse(localStorage.getItem('users') || '{}');
+    
+    if (storedUsers[user] && storedUsers[user] === pass) {
+      setLoggedIn(true);
+      localStorage.setItem('jwt', 'mock-jwt-token');
+      localStorage.setItem('currentUser', user);
+      return true;
+    }
     return false;
   }
 
   async function handleGoogle(token) {
-    try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/auth/google`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token })
-      });
-      const data = await res.json();
-      if (data.token) {
-        setLoggedIn(true);
-        localStorage.setItem('jwt', data.token);
-      }
-    } catch {}
+    // Mock Google authentication
+    setLoggedIn(true);
+    localStorage.setItem('jwt', 'mock-google-jwt-token');
+    localStorage.setItem('currentUser', 'google-user@example.com');
   }
 
   async function handleRegister(user, pass) {
-    try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/auth/email`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: user, password: pass, register: true })
-      });
-      const data = await res.json();
-      return !!data.token;
-    } catch {
-      return false;
+    // Mock registration - store user in localStorage
+    const storedUsers = JSON.parse(localStorage.getItem('users') || '{}');
+    
+    if (storedUsers[user]) {
+      return false; // User already exists
     }
+    
+    storedUsers[user] = pass;
+    localStorage.setItem('users', JSON.stringify(storedUsers));
+    
+    // Auto-login after registration
+    setLoggedIn(true);
+    localStorage.setItem('jwt', 'mock-jwt-token');
+    localStorage.setItem('currentUser', user);
+    return true;
   }
 
   function handleLogout() {
     setLoggedIn(false);
     localStorage.removeItem('jwt');
+    localStorage.removeItem('currentUser');
   }
 
   // effects
@@ -151,40 +145,47 @@ export default function App() {
 
   // chat handlers
   async function getBotReply(input) {
-    try {
-      const res = await axios.post(
-        'https://api.openai.com/v1/chat/completions',
-        {
-          model: 'gpt-3.5-turbo',
-          messages: [
-            { role: 'system', content: "You're a caring study and mental health companion." },
-            { role: 'user', content: input }
-          ],
-          temperature: 0.7
-        },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`
-          }
+  try {
+    const res = await axios.post(
+      'https://api.openai.com/v1/chat/completions',
+      {
+        model: 'gpt-3.5-turbo',
+        messages: [
+          { role: 'system', content: "You're a caring study and mental health companion." },
+          { role: 'user', content: input }
+        ],
+        temperature: 0.7
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`
         }
-      );
-      return res.data.choices[0].message.content.trim();
-    } catch {
-      return "Sorry, I'm having trouble responding right now.";
-    }
+      }
+    );
+    return res.data.choices[0].message.content.trim();
+  } catch (err) {
+    console.error('ChatGPT error', err);
+    return "Sorry, I'm having trouble responding right now.";
   }
+}
 
   async function handleChatSend(e) {
-    e.preventDefault();
-    if (!chatInput.trim()) return;
-    setChatMessages(ms => [...ms, { sender: 'user', text: chatInput }]);
-    setChatInput('');
-    setTyping(true);
-    const reply = await getBotReply(chatInput);
-    setTyping(false);
-    setChatMessages(ms => [...ms, { sender: 'bot', text: reply }]);
-  }
+  e.preventDefault();
+  if (!chatInput.trim()) return;
+
+  // add the user's message
+  setChatMessages(ms => [...ms, { sender: 'user', text: chatInput }]);
+  setChatInput('');
+  setTyping(true);
+
+  // fetch the AI's reply
+  const reply = await getBotReply(chatInput);
+
+  // display the AI's message
+  setTyping(false);
+  setChatMessages(ms => [...ms, { sender: 'bot', text: reply }]);
+}
 
   // schedule generation
   function generateSchedule() {
@@ -255,7 +256,7 @@ export default function App() {
   }
 
   if (!loggedIn) {
-     return <Login onLogin={handleLogin} onRegister={handleRegister} onGoogle={handleGoogle} />;
+    return <Login onLogin={handleLogin} onRegister={handleRegister} onGoogle={handleGoogle} />;
   }
 
   return (
@@ -365,7 +366,6 @@ export default function App() {
               style={{ width: '100%', marginBottom: 8 }}
             />
 
-            {/* checkbox on its own block */}
             <label style={{ display: 'block', margin: '16px 0 8px' }}>
               <input
                 type="checkbox"
@@ -395,7 +395,6 @@ export default function App() {
               </div>
             )}
 
-            {/* button on its own line */}
             <div style={{ textAlign: 'center', marginTop: 24 }}>
               <button
                 onClick={generateSchedule}
@@ -432,10 +431,9 @@ export default function App() {
           </>
         )}
 
-        {/* CHECK-IN */}
         {page === 'checkin' && (
           <>
-            <h2>Mood Check-In</h2>
+            <h2>Mood Check‑In</h2>
             <form onSubmit={handleMoodSubmit}>
               <label>How do you feel?</label>
               <input
@@ -467,7 +465,6 @@ export default function App() {
           </>
         )}
 
-        {/* CHAT */}
         {page === 'chat' && (
           <>
             <h2>Chat</h2>
@@ -515,7 +512,6 @@ export default function App() {
           </>
         )}
 
-        {/* RELAX */}
         {page === 'relax' && (
           <>
             <h2>Relaxation Tips</h2>
@@ -554,10 +550,7 @@ export default function App() {
                 >
                   <span>🧘 {tip}</span>
                   <span
-                    onClick={e => {
-                      e.stopPropagation();
-                      toggleFavorite(tip);
-                    }}
+                    onClick={e => { e.stopPropagation(); toggleFavorite(tip); }}
                     style={{ cursor: 'pointer', fontSize: 18 }}
                   >
                     {favorites.includes(tip) ? '★' : '☆'}
@@ -587,7 +580,6 @@ export default function App() {
 }
 
 // Helper components
-
 function Modal({ children, onClose }) {
   return (
     <div
@@ -651,7 +643,7 @@ function GratitudeModal({ onDone }) {
   const [text, setText] = useState('');
 
   function save() {
-    if (text.trim()) alert(`You wrote: “${text.trim()}”`);
+    if (text.trim()) alert(`You wrote: "${text.trim()}"`);
     onDone();
   }
 

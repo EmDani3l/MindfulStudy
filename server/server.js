@@ -2,6 +2,12 @@ import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
+console.log('→ env:', {
+  MONGODB_URI: process.env.MONGODB_URI,
+  JWT_SECRET:    process.env.JWT_SECRET,
+  GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
+  CLIENT_ORIGIN: process.env.CLIENT_ORIGIN,
+});
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { OAuth2Client } from 'google-auth-library';
@@ -13,8 +19,7 @@ app.use(cors({ origin: process.env.CLIENT_ORIGIN || 'http://localhost:3000' }));
 app.use(express.json());
 
 // connect to database and log connection state
-mongoose
-  .connect(process.env.MONGODB_URI, {
+mongoose.connect(process.env.MONGODB_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
