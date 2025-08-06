@@ -4,7 +4,6 @@ import { GoogleOAuthProvider } from '@react-oauth/google';
 import './index.css';
 import App from './App.jsx';
 
-// ←— LINE 6: grab & validate your Google Client ID
 const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 if (!googleClientId) {
   console.error('VITE_GOOGLE_CLIENT_ID is undefined');

@@ -299,7 +299,6 @@ export default function App() {
 
       <div style={{ maxWidth: 600, margin: '20px auto', background: '#fff', padding: 20, borderRadius: 10 }}>
 
-        {/* PLANNER */}
         {page === 'planner' && (
           <>
             <h2>Study Planner</h2>
